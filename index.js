@@ -27,11 +27,15 @@ app.get("/", (req, res) => {
     })
 })
 
-const port = process.env.APP_PORT || 3000
+if (process.env.NODE_ENV === "production") {
+    app.listen(process.env.APP_PORT, process.env.APP_IP)
+    console.log("The project is running...")
 
+} else {
+    const port = process.env.APP_PORT || 3000
 
-app.listen(port, () => {
+    app.listen(port, () => {
 
-    console.log((`  Listening on http://localhost:${port}`))
-
-})
+        console.log((`  Listening on http://localhost:${port}`))
+    })
+}
