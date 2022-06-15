@@ -1,22 +1,31 @@
 const fs = require("fs");
 const path = require("path");
 const randomId = require("random-id");
-const idLength = 4;
-const idPattern = '0'
+const idLength = 8;
+const idPattern = 'aA0'
 
 const dbFile = path.join(__dirname, "db.json");
 const DATA = JSON.parse(fs.readFileSync(dbFile, "utf-8"));
 
 const NO_COLLECTION = "NO_COLLECTION";
 const NO_ENTITY = "NO_ENTITY"
+const NO_PROP = "NO_PROP"
 
 const sync = () => {
+
+
     fs.writeFileSync(dbFile, JSON.stringify(DATA), "utf-8")
 }
 
 const noCollectionError = () => {
     const err = new Error("Collection does not exist")
     err.code = NO_COLLECTION
+    return err
+}
+
+const noPropertyError = () => {
+    const err = new Error("No properties")
+    err.code = NO_PROP
     return err
 }
 
@@ -27,6 +36,32 @@ const noEntityError = () => {
 }
 
 const db = {
+    getPagination: (list, properties) => {
+        if (!list) {
+            throw noCollectionError()
+        }
+        list = Object.keys(properties).reduce((arr, key) => {
+            return key === "page" || key === "limit" ? arr : arr.filter(item => item[key] === properties[key])
+        }, list)
+        const total = list.reduce(acc => acc += 1, 0)
+        const limit = properties.limit || 6
+        const pages = Math.ceil(total / limit)
+        const page = properties.page || 1
+        const pagination = {
+            total,
+            limit,
+            pages,
+            page
+        }
+
+
+        const data = {
+            items: list.slice(limit * (page - 1), limit * page),
+            pagination
+        }
+
+        return data
+    },
     find: async (collection, filter) => {
         if (!DATA[collection]) {
             throw noCollectionError()
@@ -34,9 +69,9 @@ const db = {
         const data = DATA[collection]
         if (filter) {
 
-            // return data.filter(o => o._id === filter).length
             return data.filter((o) => (Object.keys(filter).every((k) => (o[k] === filter[k]))))
         }
+
         return data;
     },
     get: async (collection, id) => {
@@ -51,22 +86,32 @@ const db = {
             }
             return o
         }
+
+
         return data
     },
     create: async (collection, data) => {
         if (!DATA[collection]) {
             throw noCollectionError()
         }
+        if (Object.keys(data).length === 0) {
+            throw noPropertyError()
+        }
         const id = randomId(idLength, idPattern)
+
         DATA[collection].push({
             ...data,
             id,
         })
         sync()
         return id
+
     },
     update: async (collection, id, data) => {
+        console.log(collection, id, data)
+
         const o = await db.get(collection, id)
+        console.log(data)
         Object.assign(o, data)
         sync()
     },
@@ -83,6 +128,15 @@ const db = {
         sync()
 
     },
+    totalDelete: async (collection, prop) => {
+        // if (prop.delete !== 'true') {
+        //     throw noPropertyError()
+
+        // }
+        DATA[collection] = []
+
+        sync()
+    },
     collections: async () => {
         return Object.keys(DATA)
     },
@@ -95,7 +149,8 @@ const db = {
         sync()
     },
     NO_COLLECTION,
-    NO_ENTITY
+    NO_ENTITY,
+    NO_PROP
 }
 
 module.exports = db
