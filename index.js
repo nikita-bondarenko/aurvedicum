@@ -14,15 +14,24 @@ nunjucks.configure("views", {
     express: app,
 })
 
+app.use(function (req, res, next) {
+    res.header("Access-Control-Allow-Origin", req.headers.origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+});
+
 app.set("view engine", "njk")
 app.use(express.json())
-app.use("/api/products", useCollection(express.Router(), 'products', 'name', 'status', 'volume', 'content', 'categoryId'))
+app.use("/api/products", useCollection(express.Router(), 'products', 'name', 'status', 'volume', 'content', 'categoryId', 'brandId', 'maxPrice', 'minPrice', 'quantity', 'description', 'imageUrl', 'price'))
     .use("/api/categories", useCollection(express.Router(), 'categories', 'title'))
-    .use("/api/content", useCollection(express.Router(), 'content', 'title', 'body'))
+    .use("/api/brands", useCollection(express.Router(), 'brands', 'title'))
 // .use("/api/basket")
 // .use("/api/order")
 
-
+express.Router().get('/login', async (res, req) => {
+    console.log(req.body)
+})
 
 app.use((err, req, res, next) => {
     res.status(500).send(err.message)
@@ -42,8 +51,6 @@ const findUserBySessionId = async (sessionId) => {
     }
     return DB.users.find((u) => u._id === userId)
 }
-
-
 
 const createSession = async (userId) => {
     const sessionId = randomid();

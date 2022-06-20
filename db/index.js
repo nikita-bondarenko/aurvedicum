@@ -118,21 +118,20 @@ const db = {
     delete: async (collection, id) => {
         if (!DATA[collection]) {
             throw noCollectionError()
-
         }
-        if (!DATA[collection].filter(o => o._id === id).length) {
+        if (DATA[collection].filter(o => o.id === id).length === 0) {
             throw noCollectionError()
-
         }
-        DATA[collection] = DATA[collection].filter((o) => o._id !== id)
+        DATA[collection] = DATA[collection].filter((o) => o.id !== id)
         sync()
 
     },
     totalDelete: async (collection, prop) => {
-        // if (prop.delete !== 'true') {
-        //     throw noPropertyError()
+        console.log(collection)
+        if (prop.delete !== 'true') {
+            throw noPropertyError()
 
-        // }
+        }
         DATA[collection] = []
 
         sync()

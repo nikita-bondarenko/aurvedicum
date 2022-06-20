@@ -71,7 +71,6 @@ const useCollection = (router, name, ...args) => {
         const id = req.params.id
 
         try {
-            await db.createCollection(name)
             await db.delete(name, id)
             res.sendStatus(204)
         } catch (err) {
