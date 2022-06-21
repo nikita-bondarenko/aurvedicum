@@ -44,7 +44,7 @@ const db = {
             return key === "page" || key === "limit" ? arr : arr.filter(item => item[key] === properties[key])
         }, list)
         const total = list.reduce(acc => acc += 1, 0)
-        const limit = properties.limit || 6
+        const limit = properties.limit || 100
         const pages = Math.ceil(total / limit)
         const page = properties.page || 1
         const pagination = {
