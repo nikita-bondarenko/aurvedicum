@@ -4,6 +4,8 @@ const cookieParser = require("cookie-parser")
 const express = require("express")
 const nunjucks = require("nunjucks")
 const randomid = require("random-id")
+const path = require('path')
+const fs = require('fs')
 
 const useCollection = require('./js/collection.js')
 const app = express()
@@ -22,12 +24,30 @@ app.use(function (req, res, next) {
 });
 
 app.set("view engine", "njk")
-app.use(express.json())
+app.use(express.json());
+
+app.post('/api/upload/delete', bodyParser.urlencoded({ extended: false }), async (req, res) => {
+    const dir = path.relative(__dirname, req.body.url)
+
+    console.log(dir);
+    fs.unlink(dir, (err) => {
+        if (err) {
+            console.log('Failed')
+            res.sendStatus(400)
+            return
+        }
+        res.sendStatus(204)
+        console.log('Successful')
+    })
+});
+
 app.use("/api/products", useCollection(express.Router(), 'products', 'name', 'status', 'volume', 'content', 'categoryId', 'brandId', 'maxPrice', 'minPrice', 'quantity', 'description', 'imageUrl', 'price'))
     .use("/api/categories", useCollection(express.Router(), 'categories', 'title'))
     .use("/api/brands", useCollection(express.Router(), 'brands', 'title'))
 // .use("/api/basket")
 // .use("/api/order")
+app.use('/images', express.static(path.join(__dirname, 'images')))
+app.use('/api', require('./js/upload'))
 
 express.Router().get('/login', async (res, req) => {
     console.log(req.body)
