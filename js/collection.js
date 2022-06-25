@@ -31,6 +31,8 @@ const useCollection = (router, name, ...args) => {
     })
 
     router.post('/', async (req, res) => {
+
+        console.log(req.body)
         try {
             await db.createCollection(name)
             const id = await db.create(name, pick(req.body, args))
