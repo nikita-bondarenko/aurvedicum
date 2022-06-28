@@ -11,7 +11,10 @@ const useCollection = (router, name, ...args) => {
 
     router.get('/', async (req, res) => {
         await db.createCollection(name)
-        const items = await db.find(name, req.query)
+        let items = await db.find(name, req.query)
+        if (items[0].title) {
+            items = items.sort((a, b) => a.title > b.title ? 1 : -1)
+        }
         res.json(db.getPagination(items, pick(req.body, 'limit', 'page', args)))
     })
 
@@ -51,6 +54,7 @@ const useCollection = (router, name, ...args) => {
     })
 
     router.patch('/:id', async (req, res) => {
+        console.log(req.body)
         const id = req.params.id
         try {
             await db.createCollection(name)

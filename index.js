@@ -17,6 +17,7 @@ nunjucks.configure("views", {
 })
 
 app.use(function (req, res, next) {
+    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH");
     res.header("Access-Control-Allow-Origin", req.headers.origin);
     res.header('Access-Control-Allow-Credentials', 'true');
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
@@ -41,7 +42,7 @@ app.use(express.json());
 //     })
 // });
 
-app.use("/api/products", useCollection(express.Router(), 'products', 'name', 'status', 'volume', 'content', 'categoryId', 'brandId', 'maxPrice', 'minPrice', 'quantity', 'description', 'images', 'price'))
+app.use("/api/products", useCollection(express.Router(), 'products', 'name', 'categories', 'brands', 'volumes', 'content', 'maxPrice', 'minPrice', 'quantity', 'description', 'images'))
     .use("/api/categories", useCollection(express.Router(), 'categories', 'title'))
     .use("/api/brands", useCollection(express.Router(), 'brands', 'title'))
 // .use("/api/basket")
