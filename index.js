@@ -1,4 +1,5 @@
-
+const username = 'aurvedicum'
+const password = 'nitay'
 const bodyParser = require("body-parser")
 const cookieParser = require("cookie-parser")
 const express = require("express")
@@ -9,8 +10,7 @@ const fs = require('fs')
 
 const useCollection = require('./js/collection.js')
 const app = express()
-
-
+app.use(express.static("public"));
 nunjucks.configure("views", {
     autoscape: true,
     express: app,
@@ -27,39 +27,19 @@ app.use(function (req, res, next) {
 app.set("view engine", "njk")
 app.use(express.json());
 
-// app.post('/api/upload/delete', bodyParser.urlencoded({ extended: false }), async (req, res) => {
-//     const dir = path.relative(__dirname, req.body.url)
 
-//     console.log(dir);
-//     fs.unlink(dir, (err) => {
-//         if (err) {
-//             console.log('Failed')
-//             res.sendStatus(400)
-//             return
-//         }
-//         res.sendStatus(204)
-//         console.log('Successful')
-//     })
-// });
 
 app.use("/api/products", useCollection(express.Router(), 'products', 'name', 'categories', 'brands', 'volumes', 'content', 'maxPrice', 'minPrice', 'quantity', 'description', 'images'))
     .use("/api/categories", useCollection(express.Router(), 'categories', 'title'))
     .use("/api/brands", useCollection(express.Router(), 'brands', 'title'))
-// .use("/api/basket")
-// .use("/api/order")
-// app.use('/images', express.static(path.join(__dirname, 'images')))
-// app.use('/api', require('./js/upload'))
 
-express.Router().get('/login', async (res, req) => {
-    console.log(req.body)
-})
 
 app.use((err, req, res, next) => {
     res.status(500).send(err.message)
 })
 
 const DB = {
-    users: [{ _id: randomid(), username: "admin", password: "pwd007", books: 0 }],
+    users: [{ _id: randomid(), username, password }],
     sessions: {},
 }
 
@@ -87,28 +67,22 @@ const deleteSession = async (sessionId) => {
 app.use(cookieParser())
 
 const auth = () => async (req, res, next) => {
+
     if (!req.cookies['sessionId']) {
         return next()
     }
-    const user = await findUserBySessionId(req.cookies['sessionId'])
+
+    const user = findUserBySessionId(req.cookies['sessionId'])
     req.user = user
     req.sessionId = req.cookies['sessionId']
     next()
 }
 
-app.post("/api/add-book", auth(), async (req, res) => {
-    if (!req.user) {
-        return res.sendStatus(401)
-    }
-    const user = await findUserByUsername(req.user.username)
-    user.books += 1;
-    res.json({ books: user.books })
-})
 
-app.get("/", auth(), (req, res) => {
+app.get("/", auth(), async (req, res) => {
     res.render('index', {
         user: req.user,
-        authError: req.query.authError === 'true'
+        authError: req.query.authError === 'true' ? 'Логин или пароль введены неверно' : req.query.authError
     })
 })
 

@@ -10,7 +10,8 @@ const DATA = JSON.parse(fs.readFileSync(dbFile, "utf-8"));
 const NO_COLLECTION = "NO_COLLECTION";
 const NO_ENTITY = "NO_ENTITY"
 const NO_PROP = "NO_PROP"
-
+const created = Date.now()
+const changed = Date.now()
 const sync = () => {
 
 
@@ -99,20 +100,21 @@ const db = {
         }
         const id = randomId(idLength, idPattern)
 
+
         DATA[collection].push({
             ...data,
             id,
+            created,
+            changed,
         })
         sync()
         return id
 
     },
     update: async (collection, id, data) => {
-        console.log(collection, id, data)
 
         const o = await db.get(collection, id)
-        console.log(data)
-        Object.assign(o, data)
+        Object.assign(o, data, { changed })
         sync()
     },
     delete: async (collection, id) => {
@@ -127,7 +129,6 @@ const db = {
 
     },
     totalDelete: async (collection, prop) => {
-        console.log(collection)
         if (prop.delete !== 'true') {
             throw noPropertyError()
 
@@ -146,6 +147,9 @@ const db = {
     reset: async () => {
         DATA = {}
         sync()
+    },
+    search: async (collection, filter) => {
+        return DATA[collection].filter(item => filter.name.toLowerCase().split(" ").every(word => item.name.toLowerCase().includes(word)))
     },
     NO_COLLECTION,
     NO_ENTITY,

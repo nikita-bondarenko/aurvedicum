@@ -5,7 +5,6 @@ const pick = require('lodash/pick')
 
 const useCollection = (router, name, ...args) => {
 
-
     const unknownProductError = (id) => `Unknown product's ID: ${id}`
     const noPropError = 'Needed properties are not found'
 
@@ -34,8 +33,6 @@ const useCollection = (router, name, ...args) => {
     })
 
     router.post('/', async (req, res) => {
-
-        console.log(req.body)
         try {
             await db.createCollection(name)
             const id = await db.create(name, pick(req.body, args))
@@ -53,8 +50,12 @@ const useCollection = (router, name, ...args) => {
 
     })
 
+    router.post('/search', async (req, res) => {
+        const items = await db.search(name, req.body)
+        res.json(db.getPagination(items, pick(req.body, 'limit', 'page'))).status(200)
+    })
+
     router.patch('/:id', async (req, res) => {
-        console.log(req.body)
         const id = req.params.id
         try {
             await db.createCollection(name)
