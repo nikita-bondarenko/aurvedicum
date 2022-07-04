@@ -9,18 +9,18 @@ const useCollection = (router, name, ...args) => {
     const noPropError = 'Needed properties are not found'
 
     router.get('/', async (req, res) => {
-        await db.createCollection(name)
-        let items = await db.find(name, req.query)
+
+        let items = await db.find(name, pick(req.query, args))
+
         if (items[0].title) {
             items = items.sort((a, b) => a.title > b.title ? 1 : -1)
         }
-        res.json(db.getPagination(items, pick(req.body, 'limit', 'page', args)))
+        res.json(db.getPagination(items, pick(req.query, 'limit', 'page')))
     })
 
     router.get('/:id', async (req, res) => {
         const id = req.params.id
         try {
-            await db.createCollection(name)
             const data = await db.get(name, id)
             res.json(data)
         } catch (err) {
@@ -48,11 +48,6 @@ const useCollection = (router, name, ...args) => {
         }
 
 
-    })
-
-    router.post('/search', async (req, res) => {
-        const items = await db.search(name, req.body)
-        res.json(db.getPagination(items, pick(req.body, 'limit', 'page'))).status(200)
     })
 
     router.patch('/:id', async (req, res) => {

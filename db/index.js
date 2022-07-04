@@ -36,6 +36,10 @@ const noEntityError = () => {
     return err
 }
 
+const searchByName = async (collection, filter) => {
+    return DATA[collection].filter(item => filter.name.toLowerCase().split(" ").every(word => item.name.toLowerCase().includes(word)))
+}
+
 const db = {
     getPagination: (list, properties) => {
         if (!list) {
@@ -45,9 +49,9 @@ const db = {
             return key === "page" || key === "limit" ? arr : arr.filter(item => item[key] === properties[key])
         }, list)
         const total = list.reduce(acc => acc += 1, 0)
-        const limit = properties.limit || 100
+        const limit = Number(properties.limit) || 100
         const pages = Math.ceil(total / limit)
-        const page = properties.page || 1
+        const page = Number(properties.page) || 1
         const pagination = {
             total,
             limit,
@@ -68,9 +72,10 @@ const db = {
             throw noCollectionError()
         }
         const data = DATA[collection]
-        if (filter) {
-
-            return data.filter((o) => (Object.keys(filter).every((k) => (o[k] === filter[k]))))
+        if (filter.name) {
+            const searchedArray = await searchByName(collection, filter)
+            return searchedArray
+            // data.filter((o) => (Object.keys(filter).every((k) => (o[k] === filter[k]))))
         }
 
         return data;
@@ -148,9 +153,7 @@ const db = {
         DATA = {}
         sync()
     },
-    search: async (collection, filter) => {
-        return DATA[collection].filter(item => filter.name.toLowerCase().split(" ").every(word => item.name.toLowerCase().includes(word)))
-    },
+
     NO_COLLECTION,
     NO_ENTITY,
     NO_PROP

@@ -32,6 +32,7 @@ app.use(express.json());
 app.use("/api/products", useCollection(express.Router(), 'products', 'name', 'categories', 'brands', 'volumes', 'content', 'maxPrice', 'minPrice', 'quantity', 'description', 'images'))
     .use("/api/categories", useCollection(express.Router(), 'categories', 'title'))
     .use("/api/brands", useCollection(express.Router(), 'brands', 'title'))
+    .use("/images", require("./js/images"))
 
 
 app.use((err, req, res, next) => {
