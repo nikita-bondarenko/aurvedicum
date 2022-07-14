@@ -9,10 +9,8 @@ const useCollection = (router, name, ...args) => {
     const noPropError = 'Needed properties are not found'
 
     router.get('/', async (req, res) => {
-
         let items = await db.find(name, pick(req.query, args))
-
-        if (items[0].title) {
+        if (items.length && Object.keys(items[0]).includes('title')) {
             items = items.sort((a, b) => a.title > b.title ? 1 : -1)
         }
         res.json(db.getPagination(items, pick(req.query, 'limit', 'page')))
@@ -20,6 +18,8 @@ const useCollection = (router, name, ...args) => {
 
     router.get('/:id', async (req, res) => {
         const id = req.params.id
+
+
         try {
             const data = await db.get(name, id)
             res.json(data)

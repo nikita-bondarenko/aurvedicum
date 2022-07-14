@@ -1,5 +1,4 @@
-const username = 'aurvedicum'
-const password = 'nitay'
+
 const bodyParser = require("body-parser")
 const cookieParser = require("cookie-parser")
 const express = require("express")
@@ -7,7 +6,10 @@ const nunjucks = require("nunjucks")
 const randomid = require("random-id")
 const path = require('path')
 const fs = require('fs')
-
+const crypto = require('crypto')
+const hash = (d) => crypto.createHash('sha512').update(d).digest('hex')
+const username = 'aurvedicum'
+const password = hash('nitay')
 const useCollection = require('./js/collection.js')
 const app = express()
 app.use(express.static("public"));
@@ -26,15 +28,11 @@ app.use(function (req, res, next) {
 
 app.set("view engine", "njk")
 app.use(express.json());
-
-
-
-app.use("/api/products", useCollection(express.Router(), 'products', 'name', 'categories', 'brands', 'volumes', 'content', 'maxPrice', 'minPrice', 'quantity', 'description', 'images'))
+app.use("/api/products", useCollection(express.Router(), 'products', 'name', 'categories', 'brands', 'volumes', 'content', 'maxPrice', 'minPrice', 'brandId', 'categoryId', 'quantity', 'description', 'images'))
     .use("/api/categories", useCollection(express.Router(), 'categories', 'title'))
     .use("/api/brands", useCollection(express.Router(), 'brands', 'title'))
     .use("/images", require("./js/images"))
-
-
+app.use("/api/basket", require("./js/basket"))
 app.use((err, req, res, next) => {
     res.status(500).send(err.message)
 })
@@ -89,8 +87,9 @@ app.get("/", auth(), async (req, res) => {
 
 app.post("/login", bodyParser.urlencoded({ extended: false }), async (req, res) => {
     const { username, password } = req.body;
+    const hashPass = hash(password)
     const user = await findUserByUsername(username);
-    if (!user || user.password !== password) {
+    if (!user || user.password !== hashPass) {
         return res.redirect('/?authError=true')
     }
     const sessionId = await createSession(user._id)
