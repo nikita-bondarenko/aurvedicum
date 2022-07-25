@@ -33,7 +33,58 @@ const useCollection = (router, name, ...args) => {
     })
 
     router.post('/', async (req, res) => {
+        if (Object.keys(req.body).includes('volumes') && Object.keys(req.body).includes('categories') && Object.keys(req.body).includes('images')) {
+            const emptyErrorText = 'Необходимо заполнить или удалить'
+            const error = {}
+            const { name, volumes, descriptions } = req.body
+            if (!name) error.name = emptyErrorText
+            volumes.forEach((item) => {
+                if (!item.volume || !item.price || !item.quantity) {
+                    const obj = { id: item.id }
+                    if (!item.volume) obj.volume = emptyErrorText
+                    if (!item.price) obj.price = emptyErrorText
+                    if (!item.quantity) obj.quantity = emptyErrorText
+                    if (!error.volumes) error.volumes = []
+                    error.volumes.push(obj)
+                }
+            })
+            const check = (section, property) => {
+                req.body[section].forEach((item) => {
+                    if (!item[property]) {
+                        const obj = { id: item.id }
+                        obj[property] = emptyErrorText
+                        if (!error[section]) error[section] = []
+                        error[section].push(obj)
+                    }
+                })
+            }
+            check('brands', 'brandId')
+            check('categories', 'categoryId')
+            check('images', 'filename')
+            descriptions.forEach((section) => {
+                if (section.content.some((item) => !item.paragraph)) {
+                    const obj = { id: section.id, content: [] }
+                    if (!error.descriptions) error.descriptions = []
+                    section.content.forEach(part => {
+                        if (!part.paragraph) {
+                            const body = { id: part.id }
+                            body.paragraph = emptyErrorText
+                            obj.content.push(body)
+                        }
+                    })
+                    error.descriptions.push(obj)
+                }
+
+            })
+
+            if (Object.keys(error).length > 0) {
+                res.status(400).json(error).end()
+                return
+            }
+        }
+
         try {
+            console.log('hi')
             await db.createCollection(name)
             const id = await db.create(name, pick(req.body, args))
             res.header('Location', `${req.protocol}://${req.hostname}/${id}`)
@@ -97,11 +148,7 @@ const useCollection = (router, name, ...args) => {
             throw err
         }
     })
-
-
-
     return router
-
 }
 
 module.exports = useCollection

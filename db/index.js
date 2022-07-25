@@ -135,7 +135,7 @@ const db = {
         const product = await db.get('products', data.productId)
         const price = product.volumes.find(volume => volume.id === data.volumeId).price
         if (item) {
-            basket = await db.updateBasketItemQuantity(basketId, item.id, data.quantity)
+            basket = await db.updateBasketItemQuantity(basketId, item.id, data.quantity, data.isAdd)
 
         } else {
             basket.items.push({ ...data, id, price })
@@ -228,17 +228,48 @@ const db = {
             throw noPropertyError()
 
         }
-        DATA[collection] = []
+        delete DATA[collection]
 
         sync()
     },
     collections: async () => {
         return Object.keys(DATA)
     },
-    createCollection: async (collection) => {
-        DATA[collection] = DATA[collection] || []
+    createCollection: async (collection, obj = []) => {
+        DATA[collection] = DATA[collection] || obj
         sync()
     },
+    getUser: async (username) => {
+        console.log(DATA.users)
+        const user = await DATA.users.find(user => user.username === username)
+        if (!user) {
+            noEntityError()
+        }
+        return user
+    },
+    getUserBySesssionId: async (sessionId) => {
+        const user = await db.get('users', DATA.sessions[sessionId].userId)
+        if (!user) {
+            noEntityError()
+        }
+        return user
+    },
+    createSession: async (userId) => {
+        const sessionId = randomId()
+        DATA.sessions[sessionId] = { userId, changed }
+        sync()
+        return sessionId
+    },
+    deleteSession: async (sessionId) => {
+        delete DATA.sessions[sessionId]
+        sync()
+
+    },
+    touchSession: async (sessionId) => {
+        DATA.sessions[sessionId].changed = changed
+        sync()
+    }
+    ,
 
 
     NO_COLLECTION,

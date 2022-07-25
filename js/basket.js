@@ -1,14 +1,13 @@
 const db = require('../db/index')
 const pick = require('lodash/pick')
 const router = require('express').Router()
-const randomid = require('random-id')
 const collection = 'baskets'
 
 setInterval(async () => {
     const baskets = await db.get(collection)
     baskets.forEach((basket => {
         const timeFromLastChange = Math.floor((Date.now() - basket.changed) / 1000 / 60)
-        if (timeFromLastChange > 6000) {
+        if (timeFromLastChange > 60) {
             basket.items.forEach(item => db.updateStorageItemQuantity(item.productId, item.volumeId, item.quantity, true))
 
             db.delete(collection, basket.id)

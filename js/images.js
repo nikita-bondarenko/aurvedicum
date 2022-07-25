@@ -1,4 +1,5 @@
 const router = require('express').Router()
+const db = require('../db/index')
 const fs = require("fs").promises
 const path = require('path')
 const multer = require('multer')
@@ -26,6 +27,20 @@ router.post("/", upload.single('image'), async (req, res) => {
         res.sendStatus(400)
     }
 })
+
+const researchImages = async () => {
+    const images = (await fs.readdir(uploadsDir))
+    const products = await db.get('products')
+    const usedImages = products.reduce((arr, product) => {
+        product.images.forEach(image => arr.push(image.filename))
+        return arr
+    }, [])
+    const unusedImages = images.filter(image => usedImages.every(item => image !== item))
+    unusedImages.forEach(image => fs.unlink(path.join(uploadsDir, image))
+    )
+}
+setTimeout(() => researchImages(), 1000 * 60 * 60 * 24 * 7)
+
 
 router.delete("/", async (req, res) => {
     const image = req.query.filename
