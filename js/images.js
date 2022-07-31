@@ -40,7 +40,7 @@ const researchImages = async () => {
     )
 }
 setTimeout(() => researchImages(), 1000 * 60 * 60 * 24 * 7)
-
+researchImages()
 
 router.delete("/", async (req, res) => {
     const image = req.query.filename

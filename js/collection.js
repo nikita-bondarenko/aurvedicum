@@ -7,32 +7,7 @@ const useCollection = (router, name, ...args) => {
 
     const unknownProductError = (id) => `Unknown product's ID: ${id}`
     const noPropError = 'Needed properties are not found'
-
-    router.get('/', async (req, res) => {
-        let items = await db.find(name, pick(req.query, args))
-        if (items.length && Object.keys(items[0]).includes('title')) {
-            items = items.sort((a, b) => a.title > b.title ? 1 : -1)
-        }
-        res.json(db.getPagination(items, pick(req.query, 'limit', 'page')))
-    })
-
-    router.get('/:id', async (req, res) => {
-        const id = req.params.id
-
-
-        try {
-            const data = await db.get(name, id)
-            res.json(data)
-        } catch (err) {
-            if (err.code === db.NO_ENTITY) {
-                res.status(404).send(unknownProductError(id))
-                return
-            }
-            throw err
-        }
-    })
-
-    router.post('/', async (req, res) => {
+    const validateProductData = (req, res) => {
         if (Object.keys(req.body).includes('volumes') && Object.keys(req.body).includes('categories') && Object.keys(req.body).includes('images')) {
             const emptyErrorText = 'Необходимо заполнить или удалить'
             const error = {}
@@ -58,33 +33,47 @@ const useCollection = (router, name, ...args) => {
                     }
                 })
             }
-            check('brands', 'brandId')
             check('categories', 'categoryId')
             check('images', 'filename')
-            descriptions.forEach((section) => {
-                if (section.content.some((item) => !item.paragraph)) {
-                    const obj = { id: section.id, content: [] }
-                    if (!error.descriptions) error.descriptions = []
-                    section.content.forEach(part => {
-                        if (!part.paragraph) {
-                            const body = { id: part.id }
-                            body.paragraph = emptyErrorText
-                            obj.content.push(body)
-                        }
-                    })
-                    error.descriptions.push(obj)
-                }
 
-            })
+            return (Object.keys(error).length > 0) ? error : false
 
-            if (Object.keys(error).length > 0) {
-                res.status(400).json(error).end()
+        }
+    }
+
+    router.get('/', async (req, res) => {
+
+        let items = await db.find(name, pick(req.query, args))
+        if (items.length && Object.keys(items[0]).includes('title')) {
+            items = items.sort((a, b) => a.title > b.title ? 1 : -1)
+        }
+        res.json(db.getPagination(items, pick(req.query, 'limit', 'page')))
+    })
+
+    router.get('/:id', async (req, res) => {
+        const id = req.params.id
+
+
+        try {
+            const data = await db.get(name, id)
+            res.json(data)
+        } catch (err) {
+            if (err.code === db.NO_ENTITY) {
+                res.status(404).send(unknownProductError(id))
                 return
             }
+            throw err
+        }
+    })
+
+    router.post('/', async (req, res) => {
+        const error = validateProductData(req, res)
+        if (error) {
+            res.status(400).json(error).end()
+            return
         }
 
         try {
-            console.log('hi')
             await db.createCollection(name)
             const id = await db.create(name, pick(req.body, args))
             res.header('Location', `${req.protocol}://${req.hostname}/${id}`)
@@ -102,6 +91,12 @@ const useCollection = (router, name, ...args) => {
     })
 
     router.patch('/:id', async (req, res) => {
+        console.log(req.body)
+        const error = validateProductData(req, res)
+        if (error) {
+            res.status(400).json(error).end()
+            return
+        }
         const id = req.params.id
         try {
             await db.createCollection(name)
@@ -124,8 +119,9 @@ const useCollection = (router, name, ...args) => {
         const id = req.params.id
 
         try {
-            await db.delete(name, id)
-            res.sendStatus(204)
+            const items = await db.delete(name, id)
+            console.log(items)
+            res.status(200).json(db.getPagination(items, pick(req.query, 'limit', 'page')))
         } catch (err) {
             if (err.code === db.NO_COLLECTION) {
                 res.status(404).send(unknownProductError(id))

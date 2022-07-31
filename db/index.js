@@ -114,8 +114,23 @@ const db = {
 
         return data
     },
-    createBasket: async () => {
+    createBasket: async (data) => {
         const id = randomId(idLength, idPattern)
+
+        if (data) {
+            try {
+                const basket = await db.get('baskets', data.id)
+                console.log(basket)
+
+                if (basket) return data.id
+
+            } catch {
+                DATA.baskets.push(data)
+                sync()
+                return data.id
+            }
+
+        }
         DATA.baskets.push({
             itemsQuantity: 0,
             totalPrice: 0,
@@ -151,7 +166,6 @@ const db = {
     },
     updateBasketItemQuantity: async (basketId, itemId, quantity, isAdd = false) => {
         const basket = findItemById(DATA.baskets, basketId)
-
         const item = findItemById(basket.items, itemId)
         const res = await db.updateStorageItemQuantity(item.productId, item.volumeId, quantity, !isAdd)
         item.quantity = isAdd ? item.quantity + quantity : item.quantity - quantity
@@ -211,17 +225,19 @@ const db = {
         }
         DATA[collection] = DATA[collection].filter((o) => o.id !== id)
         sync()
-
+        return DATA[collection]
     },
     deleteBasketItem: async (basketId, itemId) => {
         const basket = findItemById(DATA.baskets, basketId)
         const item = findItemById(basket.items, itemId)
+        const res = await db.updateStorageItemQuantity(item.productId, item.volumeId, item.quantity, true)
+
         const index = basket.items.indexOf(item)
         basket.items.splice(index, 1)
         basket.itemsQuantity = basket.items.reduce((acc, item) => acc + item.quantity, 0)
         basket.totalPrice = basket.items.reduce((acc, item) => acc + (item.price * item.quantity), 0)
         sync()
-        return basket
+        if (res) return basket
     },
     totalDelete: async (collection, prop) => {
         if (prop.delete !== 'true') {

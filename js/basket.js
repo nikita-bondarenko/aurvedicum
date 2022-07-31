@@ -37,6 +37,14 @@ router.post("/", async (req, res) => {
     res.status(200).json({ ...basket, items, pagination, userAccessKey: basketId, })
 })
 
+router.post("/fromOrder", async (req, res) => {
+    console.log(req.body)
+    basketId = await db.createBasket(req.body)
+    // console.log(basketId)
+
+    res.status(200).send(basketId)
+})
+
 router.get("/", async (req, res) => {
     const basketId = await getBasket(req.query.userAccessKey)
     const basket = await db.get(collection, basketId)
@@ -45,19 +53,27 @@ router.get("/", async (req, res) => {
     res.status(200).json({ ...basket, items, pagination, userAccessKey: basketId })
 })
 
+// db.delete('baskets', 'j3PvFmFhAQ').then(() => db.get('baskets').then(res => console.log(res)))
+// db.get('baskets').then(res => console.log(res))
+// db.delete('baskets')
+// db.totalDelete('baskets', { delete: 'true' })
+// db.createCollection((collection))
+
 router.patch('/', async (req, res) => {
+
     if (!req.body.basketId || !req.body.itemId || !req.body.quantity) {
         return res.sendStatus(400)
     }
-    console.log(req.body)
-    let basket
     try {
-        basket = await db.updateBasketItemQuantity(req.body.basketId, req.body.itemId, req.body.quantity, req.body.isAdd)
+        const basket = await db.updateBasketItemQuantity(req.body.basketId, req.body.itemId, req.body.quantity, req.body.isAdd)
+        if (basket) {
+            const { items, pagination } = await db.getPagination(basket.items, pick(req.body, 'limit', 'page'))
+            res.status(200).json({ ...basket, items, pagination })
+        }
     } catch {
         return res.sendStatus(404)
     }
-    const { items, pagination } = await db.getPagination(basket.items, pick(req.body, 'limit', 'page'))
-    res.status(200).json({ ...basket, items, pagination })
+
 })
 
 router.delete('/', async (req, res) => {
@@ -73,6 +89,23 @@ router.delete('/', async (req, res) => {
     }
     const { items, pagination } = await db.getPagination(basket.items, pick(req.query, 'limit', 'page'))
     res.status(200).json({ ...basket, items, pagination })
+})
+
+router.delete('/:id', async (req, res) => {
+    console.log(req.params.id)
+    try {
+        const basket = await db.get(collection, req.params.id)
+        if (basket) {
+
+            const res = await db.updateStorageItemQuantity(item.productId, item.volumeId, item.quantity, true)
+            if (res) {
+                db.delete(collection, req.params.id).then(() => res.sendStatus(204).end())
+            }
+        }
+    } catch {
+        res.sendStatus(404).end()
+    }
+
 })
 
 module.exports = router

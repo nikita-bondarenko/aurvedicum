@@ -13,6 +13,12 @@ nunjucks.configure("views", {
     autoscape: true,
     express: app,
 })
+deleteBadProducts = async () => {
+    const products = await db.get('products')
+    products.forEach(product => !product.name ? db.delete('products', product.id) : 1)
+}
+
+deleteBadProducts()
 
 app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH");
@@ -21,7 +27,11 @@ app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     next();
 });
+
 app.set("view engine", "njk")
+app.get('/', (req, res) => {
+    res.render('index')
+})
 app.use(express.json());
 app.use("/api/products", useCollection(express.Router(), 'products', 'name', 'categories', 'brands', 'volumes', 'content', 'maxPrice', 'minPrice', 'brandId', 'categoryId', 'quantity', 'description', 'images'))
     .use("/api/categories", useCollection(express.Router(), 'categories', 'title'))
@@ -29,6 +39,7 @@ app.use("/api/products", useCollection(express.Router(), 'products', 'name', 'ca
     .use("/images", require("./js/images"))
     .use("/api/basket", require("./js/basket"))
     .use("/api/order", require("./js/order"))
+    .use("/api/status", useCollection(express.Router(), 'status', 'title'))
     .use("/admin", require("./js/admin"))
     .use("/api/deliveries", useCollection(express.Router(), 'deliveries', 'title', 'price'))
     .use("/api/contacts", useCollection(express.Router(), 'contacts', 'header', 'content'))

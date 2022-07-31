@@ -5,43 +5,64 @@ const collection = 'orders'
 
 const unknownProductError = (id) => `Unknown product's ID: ${id}`
 const noPropError = 'Needed properties are not found'
+const requiredArr = ['name', 'email', 'phone', 'address']
 
-router.post('/', async (req, res) => {
-    const requiredArr = ['name', 'email', 'phone', 'address']
+const getErrorData = (requiredArr, body) => {
     const error = requiredArr.reduce((obj, key) => {
-        if (!req.body[key]) {
+        if (!body[key]) {
             obj[key] = 'Поле необходимо заполнить'
         }
         return obj
     }, {})
 
-    if (Object.keys(error).length > 0) {
+    return Object.keys(error).length > 0 ? error : false
+}
+
+router.post('/', async (req, res) => {
+    const error = getErrorData(requiredArr, req.body)
+    if (error) {
         res.status(400).json(error)
         return
     }
     const basket = await db.get('baskets', req.body.basketId)
-    const order = Object.assign({}, req.body, { basket })
+    const statuses = await db.get('status')
+    const status = statuses[2]
+    const order = Object.assign({}, req.body, { basket, status })
     db.createCollection(collection)
     const orderId = await db.create(collection, order)
-    db.delete('baskets', req.body.basketId).catch(() => res.status(404).message('Корзина не найдена').end())
-    res.status(200).json({ orderId })
+    try {
+        const orders = await db.delete('baskets', req.body.basketId)
+        if (orders) res.status(200).json({ orderId })
+
+    } catch {
+        res.sendStatus(404).end()
+    }
 })
 
 router.get('/', async (req, res) => {
-    let items = await db.find(collection, pick(req.query, args))
-    if (items.length && Object.keys(items[0]).includes('title')) {
-        items = items.sort((a, b) => a.title > b.title ? 1 : -1)
+
+    console.log(req.query)
+    let items = await db.find(collection, 'name')
+    items = items.sort((a, b) => a.created > b.created ? -1 : 1)
+    if (req.query.lowBorderParse) {
+        items = items.filter(item => item.created >= Number(req.query.lowBorderParse))
     }
+    if (req.query.highBorderParse) {
+        items = items.filter(item => item.created <= Number(req.query.highBorderParse))
+    }
+
+    if (req.query.statusId) {
+        items = items.filter(item => item.status.id === req.query.statusId)
+    }
+
     res.json(db.getPagination(items, pick(req.query, 'limit', 'page')))
 })
 
 router.get('/:id', async (req, res) => {
     const id = req.params.id
-
-
     try {
         const data = await db.get(collection, id)
-        res.json(data)
+        res.status(200).json(data)
     } catch (err) {
         if (err.code === db.NO_ENTITY) {
             res.status(404).send(unknownProductError(id))
@@ -51,13 +72,21 @@ router.get('/:id', async (req, res) => {
     }
 })
 
-
 router.patch('/:id', async (req, res) => {
+    console.log(req.body)
+    const error = getErrorData(requiredArr, req.body)
+    if (error) {
+        res.status(400).json(error)
+        return
+    }
     const id = req.params.id
     try {
-        await db.createCollection(name)
-        const updateData = pick(req.body, args)
-        await db.update(name, id, updateData)
+        await db.createCollection(collection)
+        const updateData = req.body
+        console.log(req.body.basket)
+        await db.update(collection, id, updateData)
+        db.delete('baskets', req.body.basket.id).catch(() => res.sendStatus(404).end())
+
         res.sendStatus(204)
     } catch (err) {
         if (err.code === db.NO_ENTITY) {
@@ -67,16 +96,13 @@ router.patch('/:id', async (req, res) => {
         throw err
     }
 })
-
-
-
 
 router.delete('/:id', async (req, res) => {
     const id = req.params.id
 
     try {
-        await db.delete(name, id)
-        res.sendStatus(204)
+        const items = await db.delete(collection, id)
+        res.status(200).json(db.getPagination(items, pick(req.query, 'limit', 'page')))
     } catch (err) {
         if (err.code === db.NO_COLLECTION) {
             res.status(404).send(unknownProductError(id))
@@ -85,6 +111,7 @@ router.delete('/:id', async (req, res) => {
         throw err
     }
 })
+
 
 router.delete('/', async (req, res) => {
     try {
