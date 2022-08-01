@@ -32,6 +32,12 @@ app.set("view engine", "njk")
 app.get('/', (req, res) => {
     res.render('index')
 })
+const pathArr = ['/:id', '/basket', '/order', '/orderInfo', '/admin/orders', '/admin/orders/:id', '/admin/orders/info', '/admin/orders/add', '/admin/products', '/admin/products/:id', '/admin/products/add', '/admin/contacts']
+pathArr.forEach((path) => {
+    app.get(path, (req, res) => {
+        res.redirect('/')
+    })
+})
 app.use(express.json());
 app.use("/api/products", useCollection(express.Router(), 'products', 'name', 'categories', 'brands', 'volumes', 'content', 'maxPrice', 'minPrice', 'brandId', 'categoryId', 'quantity', 'description', 'images'))
     .use("/api/categories", useCollection(express.Router(), 'categories', 'title'))
