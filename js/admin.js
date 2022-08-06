@@ -50,17 +50,16 @@ router.post('/login', async (req, res) => {
 
 router.get('/logout', async (req, res) => {
     const { sessionId } = req.query
-
     await db.deleteSession(sessionId)
     res.sendStatus(200)
 })
 
 router.get('/', async (req, res) => {
-
     const { sessionId } = req.query
     db.getUserBySesssionId(sessionId).then(() => {
-        res.send(true)
         db.touchSession(sessionId)
+
+        res.send(true)
     }).catch(() => {
         res.send(false)
     })
