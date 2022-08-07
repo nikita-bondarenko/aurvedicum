@@ -34,26 +34,13 @@ app.use(function (req, res, next) {
 app.set("view engine", "njk")
 
 app.get('/', async (req, res) => {
-    console.log(req.cookies)
-
     res.render('index')
 })
-app.get('/api/link', async (req, res) => {
-    console.log(req.cookies.pathname)
-    res.status(200).send(req.cookies.pathname)
-})
-const pathArr = ['/catalog', '/:id', '/admin/orders', '/admin/orders/:id', '/admin/orders/info', '/admin/orders/add', '/admin/products', '/admin/products/:id', '/admin/products/add', '/admin/contacts']
+
+const pathArr = ['/', '/catalog', '/:id', '/admin/orders', '/admin/orders/:id', '/admin/orders/info', '/admin/orders/add', '/admin/products', '/admin/products/:id', '/admin/products/add', '/admin/contacts']
 pathArr.forEach((path) => {
     app.get(path, async (req, res) => {
-        console.log(req.params.id)
-        if (path.includes(':id')) {
-            res.cookie('pathname', path.replace(':id', req.params.id), { path: '/api/link' }).redirect('/')
-            return
-        }
-
-        console.log('hi')
-        res.cookie('pathname', path, { path: '/api/link' }).redirect('/')
-
+        res.render('index')
     })
 })
 app.use(express.json());
@@ -66,7 +53,7 @@ app.use("/api/products", useCollection(express.Router(), 'products', 'name', 'ca
     .use("/api/status", useCollection(express.Router(), 'status', 'title'))
     .use("/api/admin", require("./js/admin"))
     .use("/api/deliveries", useCollection(express.Router(), 'deliveries', 'title', 'price'))
-    .use("/api/contacts", useCollection(express.Router(), 'contacts', 'header', 'content'))
+    .use("/api/contacts", useCollection(express.Router(), 'contacts', 'header', 'body', 'phone'))
 
 
 

@@ -7,9 +7,19 @@ const useCollection = (router, name, ...args) => {
 
     const unknownProductError = (id) => `Unknown product's ID: ${id}`
     const noPropError = 'Needed properties are not found'
+
+    const validateContactData = (req, res) => {
+        const emptyErrorText = 'Необходимо заполнить'
+        const error = {}
+        const { header, phone } = req.body
+        if (!header) error.header = emptyErrorText
+        if (!phone) error.phone = emptyErrorText
+        return (Object.keys(error).length > 0) ? error : false
+    }
     const validateProductData = (req, res) => {
+        const emptyErrorText = 'Необходимо заполнить или удалить'
+
         if (Object.keys(req.body).includes('volumes') && Object.keys(req.body).includes('categories') && Object.keys(req.body).includes('images')) {
-            const emptyErrorText = 'Необходимо заполнить или удалить'
             const error = {}
             const { name, volumes, descriptions } = req.body
             if (!name) error.name = emptyErrorText
@@ -52,6 +62,9 @@ const useCollection = (router, name, ...args) => {
 
     router.get('/:id', async (req, res) => {
         const id = req.params.id
+        // const items = await db.get(name, id)
+        // console.log(items, id)
+        console.log(id)
 
 
         try {
@@ -67,7 +80,9 @@ const useCollection = (router, name, ...args) => {
     })
 
     router.post('/', async (req, res) => {
-        const error = validateProductData(req, res)
+
+
+        const error = name === 'contacts' ? validateContactData(req, res) : validateProductData(req, res)
         if (error) {
             res.status(400).json(error).end()
             return
@@ -91,9 +106,10 @@ const useCollection = (router, name, ...args) => {
     })
 
     router.patch('/:id', async (req, res) => {
-        console.log(req.body)
-        const error = validateProductData(req, res)
+        // console.log(req.body)
+        const error = name === 'contacts' ? validateContactData(req, res) : validateProductData(req, res)
         if (error) {
+            console.log(error)
             res.status(400).json(error).end()
             return
         }
