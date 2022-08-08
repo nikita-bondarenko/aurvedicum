@@ -8,7 +8,6 @@ const crypto = require('crypto')
 const hash = (d) => crypto.createHash('sha512').update(d).digest('hex')
 const useCollection = require('./js/collection.js')
 
-
 const app = express()
 app.use(cookieParser())
 
@@ -54,8 +53,9 @@ app.use("/api/products", useCollection(express.Router(), 'products', 'name', 'ca
     .use("/api/admin", require("./js/admin"))
     .use("/api/deliveries", useCollection(express.Router(), 'deliveries', 'title', 'price'))
     .use("/api/contacts", useCollection(express.Router(), 'contacts', 'header', 'body', 'phone'))
-
-
+    .use("/api/articles", useCollection(express.Router(), 'articles', 'filename', 'header', 'body'))
+    .use("/api/news", useCollection(express.Router(), 'news', 'filename', 'header', 'body'))
+    .use("/api/additions", useCollection(express.Router(), 'additions', 'header', 'body'))
 
 
 if (process.env.NODE_ENV === "production") {

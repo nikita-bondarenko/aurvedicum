@@ -31,17 +31,21 @@ router.post("/", upload.single('image'), async (req, res) => {
 const researchImages = async () => {
     const images = (await fs.readdir(uploadsDir))
     const products = await db.get('products')
+    const articles = await db.get('articles')
+    const news = await db.get('news')
+
     const usedImages = products.reduce((arr, product) => {
         product.images.forEach(image => arr.push(image.filename))
         return arr
     }, [])
-    const unusedImages = images.filter(image => usedImages.every(item => image !== item))
+    const usedArticleImages = articles.reduce((arr, article) => [...arr, article.filename], [])
+    const usedNewImages = news.reduce((arr, item) => [...arr, item.filename], [])
+
+    const unusedImages = images.filter(image => usedImages.every(item => image !== item) && usedArticleImages.every(item => image !== item) && usedNewImages.every(item => image !== item))
     unusedImages.forEach(image => fs.unlink(path.join(uploadsDir, image))
     )
 }
-setTimeout(() => researchImages(), 1000 * 60 * 60 * 24 * 7)
-researchImages()
-
+setTimeout(() => researchImages(), 1000 * 60 * 60)
 router.delete("/", async (req, res) => {
     const image = req.query.filename
     const images = (await fs.readdir(uploadsDir))

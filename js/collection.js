@@ -8,6 +8,15 @@ const useCollection = (router, name, ...args) => {
     const unknownProductError = (id) => `Unknown product's ID: ${id}`
     const noPropError = 'Needed properties are not found'
 
+    const validateArticleData = (req, res) => {
+        const emptyErrorText = 'Необходимо заполнить'
+        const error = {}
+        const { header, filename } = req.body
+        if (!header) error.header = emptyErrorText
+        if (!filename && name !== 'additions') error.filename = emptyErrorText
+        return (Object.keys(error).length > 0) ? error : false
+    }
+
     const validateContactData = (req, res) => {
         const emptyErrorText = 'Необходимо заполнить'
         const error = {}
@@ -62,11 +71,6 @@ const useCollection = (router, name, ...args) => {
 
     router.get('/:id', async (req, res) => {
         const id = req.params.id
-        // const items = await db.get(name, id)
-        // console.log(items, id)
-        console.log(id)
-
-
         try {
             const data = await db.get(name, id)
             res.json(data)
@@ -81,13 +85,14 @@ const useCollection = (router, name, ...args) => {
 
     router.post('/', async (req, res) => {
 
+        name === 'articles' || name === 'news' || name === 'additions' ? error = validateArticleData(req, res) : 1
+        name === 'contacts' ? error = validateContactData(req, res) : 1
+        name === 'products' ? error = validateProductData(req, res) : 1
 
-        const error = name === 'contacts' ? validateContactData(req, res) : validateProductData(req, res)
         if (error) {
             res.status(400).json(error).end()
             return
         }
-
         try {
             await db.createCollection(name)
             const id = await db.create(name, pick(req.body, args))
@@ -101,13 +106,12 @@ const useCollection = (router, name, ...args) => {
             }
             throw err
         }
-
-
     })
 
     router.patch('/:id', async (req, res) => {
-        // console.log(req.body)
-        const error = name === 'contacts' ? validateContactData(req, res) : validateProductData(req, res)
+        name === 'articles' || name === 'news' || name === 'additions' ? error = validateArticleData(req, res) : 1
+        name === 'contacts' ? error = validateContactData(req, res) : 1
+        name === 'products' ? error = validateProductData(req, res) : 1
         if (error) {
             console.log(error)
             res.status(400).json(error).end()
@@ -127,9 +131,6 @@ const useCollection = (router, name, ...args) => {
             throw err
         }
     })
-
-
-
 
     router.delete('/:id', async (req, res) => {
         const id = req.params.id
