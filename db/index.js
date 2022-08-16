@@ -54,7 +54,7 @@ const db = {
             return key === "page" || key === "limit" ? arr : arr.filter(item => item[key] === properties[key])
         }, list)
         const total = list.reduce(acc => acc += 1, 0)
-        const limit = Number(properties.limit) || 100
+        const limit = Number(properties.limit) || 1000
         const pages = Math.ceil(total / limit) || 1
         const page = Number(properties.page) || 1
         const pagination = {
@@ -256,7 +256,7 @@ const db = {
         sync()
     },
     getUser: async (username) => {
-        console.log(DATA.users)
+        // console.log(DATA.users)
         const user = await DATA.users.find(user => user.username === username)
         if (!user) {
             noEntityError()

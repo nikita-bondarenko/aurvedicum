@@ -1,0 +1,2 @@
+"use strict";(self["webpackChunkclient"]=self["webpackChunkclient"]||[]).push([[263],{1263:function(n,t,e){e.r(t),e.d(t,{default:function(){return l}});var a=e(3396),u=e(4460);const c={class:"container content"},r=(0,a._)("span",null,"Не удалось найти страницу",-1),s=[r];var i={__name:"NotFound",setup(n){return u.h.updateProp("adminPage","adminProducts"),(n,t)=>((0,a.wg)(),(0,a.iD)("main",c,s))}};const o=i;var l=o}}]);
+//# sourceMappingURL=263.120bc951.js.map

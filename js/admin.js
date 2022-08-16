@@ -34,6 +34,10 @@ router.post('/login', async (req, res) => {
 
     try {
         const user = await db.getUser(req.body.login)
+        if (!user) {
+            res.sendStatus(400)
+            return
+        }
         const sessionId = await db.createSession(user.id)
         if (user.password !== password) {
             res.sendStatus(400)

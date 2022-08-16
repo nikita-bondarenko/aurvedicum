@@ -2,7 +2,6 @@
 const db = require('../db/index')
 const pick = require('lodash/pick')
 
-
 const useCollection = (router, name, ...args) => {
 
     const unknownProductError = (id) => `Unknown product's ID: ${id}`
@@ -26,7 +25,7 @@ const useCollection = (router, name, ...args) => {
         return (Object.keys(error).length > 0) ? error : false
     }
     const validateProductData = (req, res) => {
-        const emptyErrorText = 'Необходимо заполнить или удалить'
+        const emptyErrorText = 'Необходимо заполнить'
 
         if (Object.keys(req.body).includes('volumes') && Object.keys(req.body).includes('categories') && Object.keys(req.body).includes('images')) {
             const error = {}
@@ -53,6 +52,9 @@ const useCollection = (router, name, ...args) => {
                 })
             }
             check('categories', 'categoryId')
+            check('brands', 'brandId')
+
+
             check('images', 'filename')
 
             return (Object.keys(error).length > 0) ? error : false
@@ -61,11 +63,12 @@ const useCollection = (router, name, ...args) => {
     }
 
     router.get('/', async (req, res) => {
-
+        db.createCollection(name)
         let items = await db.find(name, pick(req.query, args))
         if (items.length && Object.keys(items[0]).includes('title')) {
             items = items.sort((a, b) => a.title > b.title ? 1 : -1)
         }
+        if (name === 'articles' || name === 'news') items = items.sort((a, b) => a.created > b.created ? 1 : -1)
         res.json(db.getPagination(items, pick(req.query, 'limit', 'page')))
     })
 
@@ -117,6 +120,7 @@ const useCollection = (router, name, ...args) => {
             res.status(400).json(error).end()
             return
         }
+
         const id = req.params.id
         try {
             await db.createCollection(name)
@@ -137,7 +141,6 @@ const useCollection = (router, name, ...args) => {
 
         try {
             const items = await db.delete(name, id)
-            console.log(items)
             res.status(200).json(db.getPagination(items, pick(req.query, 'limit', 'page')))
         } catch (err) {
             if (err.code === db.NO_COLLECTION) {
