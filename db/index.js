@@ -36,8 +36,6 @@ try { DATA = JSON.parse(fs.readFileSync(dbFile, "utf-8")) } catch (error) {
     getMongoDB()
 }
 
-
-
 const updateMongoDB = async () => {
     const client = await clientPromise;
     const dataBase = client.db("aurvedicum");
