@@ -7,9 +7,10 @@ const path = require("path");
 const randomId = require("random-id");
 const idLength = 10;
 const idPattern = 'aA0'
+let DATA = { products: [] }
 
 const dbFile = path.join(__dirname, "db.json");
-const DATA = JSON.parse(fs.readFileSync(dbFile, "utf-8"));
+
 const NO_COLLECTION = "NO_COLLECTION";
 const NO_ENTITY = "NO_ENTITY"
 const NO_PROP = "NO_PROP"
@@ -22,14 +23,27 @@ const sync = () => {
 const { MongoClient } = require("mongodb");
 
 const clientPromise = MongoClient.connect(process.env.DB_URI);
+const getMongoDB = async () => {
+    const client = await clientPromise;
+    const dataBase = client.db("aurvedicum");
+    const [data] = await dataBase.collection('data').find().toArray()
+    fs.writeFileSync(dbFile, JSON.stringify(data))
 
-const mongoDB = async () => {
+}
+
+try { DATA = JSON.parse(fs.readFileSync(dbFile, "utf-8")) } catch (error) {
+    console.error(error)
+    getMongoDB()
+}
+
+
+
+const updateMongoDB = async () => {
     const client = await clientPromise;
     const dataBase = client.db("aurvedicum");
     try {
         if (DATA) {
             const isDeleted = await dataBase.dropDatabase()
-            console.log(isDeleted)
             if (isDeleted) {
                 const { acknowledged } = dataBase.collection('data').insertOne(DATA)
                 console.log(acknowledged)
@@ -39,7 +53,7 @@ const mongoDB = async () => {
         console.error(error)
     }
 }
-setInterval(() => mongoDB(), 1000 * 60 * 60 * 24)
+setInterval(() => updateMongoDB(), 1000 * 60 * 60 * 24)
 
 
 const noCollectionError = () => {
@@ -122,6 +136,7 @@ const db = {
     },
     get: async (collection, id) => {
 
+        if (!DATA) return
         if (!DATA[collection]) {
             throw noCollectionError()
         }
