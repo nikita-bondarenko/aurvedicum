@@ -23,3 +23,5 @@ aurvedicum
 nitay
 ```
 Deploy in (web)[https://aurvedicum.na4u.ru]
+
+[GitHub-pages](https://nikita-bondarenko.github.io/vue-moire/#/)
