@@ -22,4 +22,4 @@ aurvedicum
 ```
 nitay
 ```
-(Deploy in web)[https://aurvedicum.na4u.ru/]
+(Deploy in web)['https://aurvedicum.na4u.ru/']
