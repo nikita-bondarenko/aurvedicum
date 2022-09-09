@@ -24,3 +24,5 @@ nitay
 ```
 Deploy in [web](https://aurvedicum.na4u.ru)
 
+Frontend for development [here](https://github.com/nikita-bondarenko/aurvedicum-client)
+
